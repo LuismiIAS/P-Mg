@@ -1,0 +1,51 @@
+! =============================================================================
+! WPS - namelist.wps (annotated copy)
+!
+! Copy of the WPS namelist used to prepare the WRF input. Values are kept as
+! run; only comments were added ([NOTE]).
+! [NOTE] max_dom = 1: only the first column applies; the second column
+! (domain 2) was not used.
+! [NOTE] start_date and end_date belong to one preprocessing segment
+! (2023-03-01 to 2023-04-30). The whole period 2020-12-01 to 2025-01-01 was
+! processed in segments with this same configuration, from NCEP GDAS/FNL
+! 0.25 deg analyses every 6 h (ds083.3).
+! [NOTE] Domain: Lambert conformal, 121 x 91 points at 15 km.
+! =============================================================================
+
+&share
+ wrf_core = 'ARW',
+ max_dom = 1,
+ start_date = '2023-03-01_00:00:00','2022-12-29_00:00:00',
+ end_date   = '2023-04-30_18:00:00','2023-01-10_18:00:00',
+ interval_seconds = 21600
+/
+
+&geogrid
+ parent_id         =    1,    1,
+ parent_grid_ratio =    1,    3,
+ i_parent_start    =    1,   22,
+ j_parent_start    =    1,   22,
+ e_we              =  121,  220,
+ e_sn              =   91,  112,
+ geog_data_res =   'default','default', ! 'modis_30s+noah','modis_30s+noah',
+ dx = 15000,
+ dy = 15000,
+ map_proj = 'lambert',
+ ref_lat  = 11.0,      ! approximate centre of the domain
+ ref_lon  = -73.8,
+ truelat1 = 11.0,
+ truelat2 = 15.0,
+ stand_lon = -73.8,
+ geog_data_path = '/mnt/z/WRF_INPUT/WPS_GEOG/'
+/
+
+&ungrib
+ out_format = 'WPS',
+ prefix = 'FILE',
+/
+
+&metgrid
+ fg_name = 'FILE'
+ io_form_metgrid = 2,  ! NetCDF output
+ opt_output_from_metgrid_path = '/mnt/z/WRF_INPUT/MET_EM_FILES_CHEM/',   ! Output path of the met_em files read by real.exe
+/

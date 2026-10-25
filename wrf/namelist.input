@@ -1,0 +1,167 @@
+! =============================================================================
+! WRF-Chem V4.7.1 - namelist.input (annotated copy)
+!
+! Copy of the namelist used to run WRF for the thesis. Parameter values are
+! kept exactly as run; only the comments were revised. Lines marked
+! [CORRECTED] had a comment that did not describe the option actually used;
+! lines marked [NOTE] add context. The physics options were checked against
+! the global attributes of the WRF output files (MP_PHYSICS = 7,
+! CU_PHYSICS = 5, BL_PBL_PHYSICS = 1, SF_SFCLAY_PHYSICS = 1,
+! SF_SURFACE_PHYSICS = 2, RA_LW/SW_PHYSICS = 4, SST_UPDATE = 0, DX = 15000).
+!
+! [NOTE] The dates below belong to one restart segment (2023-01-09 18 UTC to
+! 2023-01-15 18 UTC). The full run covered 2020-12-01 00 UTC to
+! 2025-01-01 00 UTC in restart segments with this same configuration.
+! [NOTE] max_dom = 1: only the first column of each option applies. The
+! second column (domain 2, 5 km) was not used.
+! =============================================================================
+
+&time_control
+ run_days                            = 0                ! Number of simulation days
+ run_hours                           = 0                 ! Additional simulation hours
+ run_minutes                         = 0                 ! Additional simulation minutes
+ run_seconds                         = 0                 ! Additional simulation seconds
+ start_year                          = 2023, 2022   ! Start year for each domain
+ start_month                         = 01,   12     ! Start month
+ start_day                           = 09,   29     ! Start day
+ start_hour                          = 18,   12     ! Start hour (UTC)
+ end_year                            = 2023, 2023   ! End year for each domain
+ end_month                           = 01,   01     ! End month
+ end_day                             = 15,   10     ! End day
+ end_hour                            = 18,   18     ! End hour
+ interval_seconds                    = 21600,              ! Time interval between input files (in seconds)
+ input_from_file                     = .true., .true.     ! Read input from met_em files
+ history_interval                    = 60, 60             ! Output interval (in minutes)
+ frames_per_outfile                  = 1, 1               ! One output frame per file
+ restart                             = .true.             ! Run starts from a restart file (restart segment)
+ restart_interval                    = 360                ! Interval (in minutes) to write restart files
+ io_form_history                     = 2                  ! NetCDF output format
+ io_form_restart                     = 2                  ! Restart file format
+ io_form_input                       = 2                  ! Input file format
+ io_form_boundary                    = 2                  ! Lateral boundary file format
+ io_form_auxinput2                   = 2                  ! Format for auxinput2 (chemical input)
+ auxinput4_inname                    = 'wrfbdy_d<domain>' ! [CORRECTED] auxinput4 is the lower-boundary (SST) update stream, normally 'wrflowinp_d<domain>'. This name is wrong, but the stream is never read because sst_update is not set (= 0, see &physics)
+ bdy_inname                          = 'wrfbdy_d<domain>' ! Input name for boundary file
+ bdy_outname                         = 'wrfbdy_d<domain>' ! Output name for boundary file
+ history_outname                     = '/mnt/z/WRF_OUTPUT/CARIBE_CHEM/wrfout_d<domain>_<date>.nc'  ! Output history file name
+ rst_outname                         = '/mnt/z/WRF_OUTPUT/CARIBE_CHEM/wrfrst_d<domain>_<date>'    ! Output restart file name
+/
+
+ &domains
+ time_step                           = 60                 ! Time step for integration (in seconds)
+ time_step_fract_num                 = 0                  ! Numerator for fractional time step
+ time_step_fract_den                 = 1                  ! Denominator for fractional time step
+
+ max_dom                             = 1                  ! Number of domains (one domain, no nesting)
+ parent_time_step_ratio              = 1, 3               ! Ratio of parent to child domain time steps (domain 2 unused)
+ grid_id                             = 1, 2               ! ID of each domain
+ parent_id                           = 1, 1               ! ID of parent domain
+ parent_grid_ratio                   = 1, 3               ! Ratio between child and parent domains (domain 2 unused)
+ i_parent_start                      = 1, 22              ! Starting i index of nested domain (domain 2 unused)
+ j_parent_start                      = 1, 22              ! Starting j index of nested domain (domain 2 unused)
+
+ e_we                                = 121, 220           ! Number of grid points in west-east direction
+ e_sn                                = 91, 112            ! Number of grid points in south-north direction
+ dx                                  = 15000, 5000        ! Grid spacing in x (m)
+ dy                                  = 15000, 5000        ! Grid spacing in y (m)
+
+ feedback                            = 1                  ! Two-way nest feedback (no effect with max_dom = 1)
+ smooth_option                       = 0                  ! Option for smoothing fields at nest boundaries
+ lagrange_order                      = 1,                  ! Lagrange interpolation order
+ use_adaptive_time_step              = .false.            ! Adaptive time stepping (off)
+
+ num_metgrid_soil_levels             = 4                  ! Number of soil levels in met_em files
+ num_metgrid_levels                  = 34                 ! Number of vertical levels in met_em files
+ e_vert                              = 34, 34             ! Number of vertical levels (staggered) in the model
+ p_top_requested                     = 5000               ! Model top pressure (Pa)
+ dzstretch_s                         = 1.15               ! Stretching factor at the surface
+ dzstretch_u                         = 1.25               ! Stretching factor aloft
+ max_dz                              = 7000               ! Maximum vertical layer thickness (m)
+ nproc_x                             = -1                 ! Auto-calculate domain decomposition in x
+ nproc_y                             = -1                 ! Auto-calculate domain decomposition in y
+/
+
+&debug
+ check_nans = .true.                 ! Check for NaNs during model integration
+ debug_level = 0                    ! Debug verbosity level (0 = off)
+/
+
+&physics
+ mp_physics = 7, 7              ! [CORRECTED] Goddard 4-ice microphysics (Tao et al., 1989, 2016); not Lin et al. (Lin is option 2)
+ cu_physics = 5, 5              ! [CORRECTED] Grell 3D ensemble cumulus (Grell, 1993; Grell & Devenyi, 2002); not Grell-Freitas (option 3). Active in the only domain
+ cu_diag = 1, 1                 ! Output cumulus diagnostics
+ ra_lw_physics = 4, 4           ! RRTMG longwave radiation scheme
+ ra_sw_physics = 4, 4           ! RRTMG shortwave radiation scheme
+ radt = 27, 9,                   ! Radiation time step (minutes) for each domain
+ sf_sfclay_physics = 1, 1       ! Revised MM5 surface layer scheme
+ sf_surface_physics = 2, 2      ! Noah Land Surface Model (LSM)
+ bl_pbl_physics = 1, 1          ! YSU PBL scheme
+ bldt = 0, 0                    ! PBL physics timestep (0 = use model timestep)
+ do_radar_ref = 1               ! Enable radar reflectivity computation
+ num_land_cat = 21              ! Number of land categories
+ ! [NOTE] sst_update is not set, so it takes its default (0): the SST is not
+ ! updated during the integration (SST_UPDATE = 0 in the output attributes).
+/
+
+ &fdda
+ /
+
+&dynamics
+ hybrid_opt = 2                    ! Hybrid vertical coordinate
+ epssm = 0.2, 0.3                  ! Time off-centering for vertical sound waves
+ w_damping = 1                     ! Enable vertical velocity damping
+ diff_opt = 1, 1                   ! Simple diffusion on coordinate surfaces
+ km_opt = 4, 4                     ! Horizontal eddy coefficient from 2D deformation
+ diff_6th_opt = 1, 1               ! Enable 6th-order horizontal diffusion
+ diff_6th_factor = 0.18, 0.18      ! Strength of 6th-order diffusion
+ use_theta_m = 1                   ! Use moist potential temperature
+ non_hydrostatic = .true., .true.  ! Use non-hydrostatic option
+ base_temp = 290.0                 ! Base-state sea-level temperature (K)
+ zdamp = 6000., 6000.              ! Depth (m) of the upper damping layer
+ damp_opt = 3                      ! Implicit Rayleigh damping of vertical velocity
+ dampcoef = 0.2                    ! Damping coefficient
+/
+
+&bdy_control
+ spec_bdy_width = 5                   ! Number of boundary grid points with specified values
+ spec_zone = 1                        ! Number of boundary grid points updated with external data
+ relax_zone = 4                       ! Relaxation zone width
+ specified = .true., .false.          ! Boundary condition specification for each domain
+ nested = .false., .true.             ! Whether a domain is nested
+/
+
+ &grib2
+ /
+
+! [NOTE] &chem: WRF-Chem aerosol options. The output files contain the GOCART
+! sea-salt bins (SEAS_1 to SEAS_4), so this block was active during the run.
+! These aerosol fields are not used in the thesis; the SSA analysed comes
+! from SILAM, which reads only the WRF meteorology.
+&chem
+ chem_opt = 300, 300             ! [CORRECTED] GOCART simple aerosol scheme (aerosols only, no gas-phase chemistry)
+ dust_opt = 0,                    ! [CORRECTED] Dust emissions off (0)
+ seas_opt = 1,                    ! GOCART sea-salt emission scheme
+ aer_ra_feedback = 1             ! Aerosol-radiation feedback on
+ aer_op_opt = 1                  ! Aerosol optical properties (volume-averaging approximation)
+ have_bcs_chem = .true.          ! Use boundary conditions for chemistry
+ have_bcs_tracer = .true.        ! Use boundary conditions for tracers
+ gas_drydep_opt = 1              ! Enable dry deposition for gases
+ aer_drydep_opt = 1              ! Enable dry deposition for aerosols
+ opt_pars_out = 1                ! Output optical parameters (e.g., AOD)
+ dmsemis_opt = 1                 ! [CORRECTED] DMS (dimethyl sulfide) emissions on; not dust
+ kemit = 5                       ! [CORRECTED] Number of vertical levels in the emission input file; not an emission kernel
+ chemdt = 27, 9                  ! Time step for chemistry per domain (minutes)
+ emiss_opt = 0, 0                ! [CORRECTED] No anthropogenic emissions (0)
+ emiss_inpt_opt = 0              ! Format for emission input files
+ io_style_emissions = 0          ! No emission input files read
+ wetscav_onoff = 0               ! Wet scavenging off (0)
+ cldchem_onoff = 0               ! Cloud chemistry off (0)
+ phot_opt = 0, 0                 ! Photolysis option (0 = off)
+ photdt = 30, 30                 ! Photolysis timestep (minutes)
+ chem_conv_tr = 1, 1             ! Convective transport of tracers
+/
+
+ &namelist_quilt
+ nio_tasks_per_group = 0
+ nio_groups = 1
+ /
